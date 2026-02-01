@@ -142,9 +142,6 @@ All users with abnormal screening results are advised to seek professional evalu
 
 ## Contact & Links
 
-**Project Lead:** Evans Langat 
-**Email:** evansklan100@gmail.com 
-**Location:** Eldoret, Kenya
 
 **Hackathon:** Red White & Build U.S.-Kenya Hackathon 2026  
 **Category:** Health  
