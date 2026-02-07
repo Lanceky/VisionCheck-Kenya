@@ -2,19 +2,28 @@ import { Stack } from "expo-router";
 
 export default function RootLayout() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: '#FFFFFF' },
-      }}
-    >
-      <Stack.Screen name="index" />
-      <Stack.Screen name="test-suite" />
-      <Stack.Screen name="eye-photo" />
-      <Stack.Screen name="results" />
-      <Stack.Screen name="history" />
-      <Stack.Screen name="clinics" />
-      <Stack.Screen name="about" />
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="test-suite"
+        options={{ headerShown: false, gestureEnabled: false }}
+      />
+      <Stack.Screen
+        name="visual-acuity"
+        options={{ headerShown: false, gestureEnabled: false }}
+      />
+      <Stack.Screen
+        name="color-vision"
+        options={{ headerShown: false, gestureEnabled: false }}
+      />
+      <Stack.Screen
+        name="astigmatism"
+        options={{ headerShown: false, gestureEnabled: false }}
+      />
+      <Stack.Screen
+        name="clinics"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }
