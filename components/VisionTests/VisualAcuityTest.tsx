@@ -11,17 +11,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { restoreBrightness } from '../../lib/brightnessService';
+import DistanceCalibration from './DistanceCalibration';
 
 // ─── TYPES ───────────────────────────────────────────────────────────
 type Eye = 'right' | 'left';
 type TestPhase =
   | 'welcome'
   | 'distance-setup'
+  | 'distance-calibrating'
   | 'distance-calibration'
   | 'distance-test'
   | 'distance-switch-eye'
   | 'distance-results'
   | 'near-setup'
+  | 'near-calibrating'
   | 'near-test'
   | 'near-switch-eye'
   | 'near-results'
@@ -304,12 +308,14 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
   const previousPhaseMap: Record<TestPhase, TestPhase | 'exit'> = {
     'welcome': 'exit',
     'distance-setup': 'welcome',
-    'distance-calibration': 'distance-setup',
+    'distance-calibrating': 'distance-setup',
+    'distance-calibration': 'distance-calibrating',
     'distance-test': 'distance-calibration',
     'distance-switch-eye': 'distance-test',
     'distance-results': 'distance-test',
     'near-setup': 'distance-results',
-    'near-test': 'near-setup',
+    'near-calibrating': 'near-setup',
+    'near-test': 'near-calibrating',
     'near-switch-eye': 'near-test',
     'near-results': 'near-test',
     'combined-results': 'near-results',
@@ -319,6 +325,7 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
     const handler = () => {
       const prev = previousPhaseMap[phase];
       if (prev === 'exit') {
+        restoreBrightness();
         onExit?.();
       } else {
         setPhase(prev);
@@ -458,7 +465,7 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
         <ScrollView style={styles.screen} contentContainerStyle={styles.screenContent}>
           <View style={styles.headerBanner}>
             {onExit && (
-              <TouchableOpacity style={styles.backArrow} onPress={onExit}>
+              <TouchableOpacity style={styles.backArrow} onPress={() => { restoreBrightness(); onExit(); }}>
                 <Text style={styles.backArrowText}>←</Text>
               </TouchableOpacity>
             )}
@@ -528,17 +535,17 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
 
             <View style={styles.stepRow}>
               <View style={styles.stepCircle}><Text style={styles.stepNumber}>1</Text></View>
-              <Text style={styles.stepText}>Place your phone on a table or stand at eye level</Text>
+              <Text style={styles.stepText}>Stand still and hold the phone facing you</Text>
             </View>
 
             <View style={styles.stepRow}>
               <View style={styles.stepCircle}><Text style={styles.stepNumber}>2</Text></View>
-              <Text style={styles.stepText}>Step back 3 meters (~10 feet or 3 large steps)</Text>
+              <Text style={styles.stepText}>The app will guide you with voice to the correct 3-metre distance</Text>
             </View>
 
             <View style={styles.stepRow}>
               <View style={styles.stepCircle}><Text style={styles.stepNumber}>3</Text></View>
-              <Text style={styles.stepText}>We'll test each eye separately — cover the other eye</Text>
+              <Text style={styles.stepText}>Screen brightness will be set to maximum automatically</Text>
             </View>
 
             <View style={styles.stepRow}>
@@ -547,17 +554,28 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
             </View>
 
             <View style={styles.tipBox}>
-              <Text style={styles.tipText}>💡 About 3 meters: the length of a standard sofa, or 4 large steps</Text>
+              <Text style={styles.tipText}>💡 The app uses motion sensors to measure distance — a helper walks the phone to the correct position</Text>
             </View>
           </View>
         </ScrollView>
 
         <View style={styles.bottomBtnContainer}>
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => setPhase('distance-calibration')}>
+          <TouchableOpacity style={styles.primaryBtn} onPress={() => setPhase('distance-calibrating')}>
             <Text style={styles.primaryBtnText}>I've Positioned My Phone</Text>
           </TouchableOpacity>
         </View>
       </View>
+    );
+  }
+
+  // ===== DISTANCE CALIBRATING (camera + face-distance + voice) =====
+  if (phase === 'distance-calibrating') {
+    return (
+      <DistanceCalibration
+        mode="distance"
+        onCalibrated={() => setPhase('distance-calibration')}
+        onSkip={() => setPhase('distance-calibration')}
+      />
     );
   }
 
@@ -846,12 +864,12 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
 
             <View style={styles.stepRow}>
               <View style={styles.stepCircle}><Text style={styles.stepNumber}>1</Text></View>
-              <Text style={styles.stepText}>Hold your phone at arm's length (~40 cm away)</Text>
+              <Text style={styles.stepText}>Hold the phone facing you — the app will guide you to 40 cm</Text>
             </View>
 
             <View style={styles.stepRow}>
               <View style={styles.stepCircle}><Text style={styles.stepNumber}>2</Text></View>
-              <Text style={styles.stepText}>Make sure you have good lighting</Text>
+              <Text style={styles.stepText}>Brightness will stay at maximum for best contrast</Text>
             </View>
 
             <View style={styles.stepRow}>
@@ -878,13 +896,24 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
             onPress={() => {
               setCurrentEye('right');
               setNearLineIndex(0);
-              setPhase('near-test');
+              setPhase('near-calibrating');
             }}
           >
             <Text style={styles.primaryBtnText}>I'm Ready</Text>
           </TouchableOpacity>
         </View>
       </View>
+    );
+  }
+
+  // ===== NEAR CALIBRATING (camera + face-distance + voice) =====
+  if (phase === 'near-calibrating') {
+    return (
+      <DistanceCalibration
+        mode="near"
+        onCalibrated={() => setPhase('near-test')}
+        onSkip={() => setPhase('near-test')}
+      />
     );
   }
 
@@ -1055,8 +1084,9 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
       diagnosis,
       testDate: new Date().toISOString(),
       methodology: {
-        distanceTest: '3-metre Snellen chart (DPI-calibrated)',
-        nearTest: '40 cm Jaeger scale (DPI-calibrated)',
+        distanceTest: '3-metre Snellen chart (DPI-calibrated, face-distance verified)',
+        nearTest: '40 cm Jaeger scale (DPI-calibrated, face-distance verified)',
+        brightnessControl: 'Auto-maxed to 100% during test',
         letterSet: 'Sloan optotype letters',
         screenDPI: Math.round(SCREEN_DPI_PHYSICAL),
         pixelRatio: PixelRatio.get(),
@@ -1075,7 +1105,7 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
         {/* Test Methodology */}
         <View style={[styles.card, { backgroundColor: '#E0F7FA' }]}>
           <Text style={{ fontSize: 13, color: '#00695C', lineHeight: 19, textAlign: 'center' }}>
-            📐 Tested using Snellen standard at 3 m with DPI-calibrated letter sizes • Near vision at 40 cm using Jaeger scale
+            📐 Tested at verified distances (camera-calibrated) with auto-max brightness • Snellen 3 m + Jaeger 40 cm
           </Text>
         </View>
 
@@ -1136,7 +1166,10 @@ export default function VisualAcuityTest({ onComplete, onExit }: Props) {
 
       <View style={styles.bottomBtnContainer}>
         {onComplete && (
-          <TouchableOpacity style={styles.primaryBtn} onPress={() => onComplete(allResults)}>
+          <TouchableOpacity style={styles.primaryBtn} onPress={() => {
+            restoreBrightness();
+            onComplete(allResults);
+          }}>
             <Text style={styles.primaryBtnText}>Done — Save Results</Text>
           </TouchableOpacity>
         )}
