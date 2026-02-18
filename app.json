@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.lanceky.visioncheckkenya",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -44,6 +45,18 @@
         {
           "locationAlwaysAndWhenInUsePermission": "VisionCheck Kenya needs your location to find nearby eye clinics.",
           "locationWhenInUsePermission": "VisionCheck Kenya needs your location to find nearby eye clinics."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "VisionCheck Kenya uses the front camera to measure your distance from the screen for accurate vision testing. No photos are stored."
+        }
+      ],
+      [
+        "expo-brightness",
+        {
+          "isSystemBrightnessEnabled": true
         }
       ]
     ],
